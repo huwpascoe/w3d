@@ -379,12 +379,18 @@ descriptor = [
     {
         'name'          : 'animation',
         'code'          : 0x00000200,
-        'unimplemented' : True,
+        'container'     : True,
     },
     {
         'name'          : 'animation_header',
         'code'          : 0x00000201,
-        'unimplemented' : True,
+        'attrib'        : [
+            ['Version', 'version'],
+            ['Name', 'name'],
+            ['HierarchyName', 'name'],
+            ['NumFrames', 'uint32'],
+            ['FrameRate', 'uint32']
+        ]
     },
     {
         'name'          : 'animation_channel',
@@ -399,12 +405,19 @@ descriptor = [
     {
         'name'          : 'compressed_animation',
         'code'          : 0x00000280,
-        'unimplemented' : True,
+        'container'     : True,
     },
     {
         'name'          : 'compressed_animation_header',
         'code'          : 0x00000281,
-        'unimplemented' : True,
+        'attrib'        : [
+            ['Version', 'version'],
+            ['Name', 'name'],
+            ['HierarchyName', 'name'],
+            ['NumFrames', 'uint32'],
+            ['FrameRate', 'uint16'],
+            ['Flavor', 'uint16'],
+        ]
     },
     {
         'name'          : 'compressed_animation_channel',
@@ -424,7 +437,14 @@ descriptor = [
     {
         'name'          : 'morphanim_header',
         'code'          : 0x000002C1,
-        'unimplemented' : True,
+        'attrib'        : [
+            ['Version', 'version'],
+            ['Name', 'name'],
+            ['HierarchyName', 'name'],
+            ['FrameCount', 'uint32'],
+            ['FrameRate', 'float32'],
+            ['ChannelCount', 'uint32']
+        ]
     },
     {
         'name'          : 'morphanim_channel',
@@ -434,42 +454,63 @@ descriptor = [
     {
         'name'          : 'morphanim_posename',
         'code'          : 0x000002C3,
-        'unimplemented' : True,
+        'attrib'        : [['', 'string']]
     },
     {
         'name'          : 'morphanim_keydata',
         'code'          : 0x000002C4,
-        'unimplemented' : True,
+        'subname'       : 'key',
+        'subattrib'        : [
+            ['MorphFrame', 'uint32'],
+            ['PoseFrame', 'uint32'],
+        ]
     },
     {
         'name'          : 'morphanim_pivotchanneldata',
         'code'          : 0x000002C5,
-        'unimplemented' : True,
+        'subname'       : 'channel',
+        'subattrib'        : [
+            ['', 'uint32']
+        ]
     },
     {
         'name'          : 'hmodel',
         'code'          : 0x00000300,
-        'unimplemented' : True,
+        'container'     : True,
     },
     {
         'name'          : 'hmodel_header',
         'code'          : 0x00000301,
-        'unimplemented' : True,
+        'attrib'        : [
+            ['Version', 'version'],
+            ['Name', 'name'],
+            ['HierarchyName', 'name'],
+            ['NumConnections', 'uint16']
+        ]
     },
     {
         'name'          : 'node',
         'code'          : 0x00000302,
-        'unimplemented' : True,
+        'attrib'        : [
+            ['RenderObjName', 'name'],
+            ['PivotIdx', 'uint16']
+        ]
     },
     {
         'name'          : 'collision_node',
         'code'          : 0x00000303,
-        'unimplemented' : True,
+        'attrib'        : [
+            ['RenderObjName', 'name'],
+            ['PivotIdx', 'uint16']
+        ]
     },
     {
         'name'          : 'skin_node',
         'code'          : 0x00000304,
-        'unimplemented' : True,
+        'attrib'        : [
+            ['RenderObjName', 'name'],
+            ['PivotIdx', 'uint16']
+        ]
     },
     {
         'name'          : 'obsolete_w3d_chunk_hmodel_aux_data',
@@ -484,7 +525,7 @@ descriptor = [
     {
         'name'          : 'lodmodel',
         'code'          : 0x00000400,
-        'unimplemented' : True,
+        'container'     : True,
     },
     {
         'name'          : 'lodmodel_header',
@@ -499,7 +540,7 @@ descriptor = [
     {
         'name'          : 'collection',
         'code'          : 0x00000420,
-        'unimplemented' : True,
+        'container'     : True,
     },
     {
         'name'          : 'collection_header',
@@ -509,7 +550,7 @@ descriptor = [
     {
         'name'          : 'collection_obj_name',
         'code'          : 0x00000422,
-        'unimplemented' : True,
+        'attrib'        : [['', 'string']]
     },
     {
         'name'          : 'placeholder',
@@ -524,97 +565,201 @@ descriptor = [
     {
         'name'          : 'points',
         'code'          : 0x00000440,
-        'unimplemented' : True,
+        'subname'       : 'point',
+        'subattrib'     : [['', 'vector3']]
     },
     {
         'name'          : 'light',
         'code'          : 0x00000460,
-        'unimplemented' : True,
+        'container'     : True,
     },
     {
         'name'          : 'light_info',
         'code'          : 0x00000461,
-        'unimplemented' : True,
+        'attrib'        : [
+            ['Attributes', 'uint32'],
+            ['_unused', 'uint32'],
+            ['Ambient', 'rgb'],
+            ['Diffuse', 'rgb'],
+            ['Specular', 'rgb'],
+            ['Intensity', 'float32']
+        ]
     },
     {
         'name'          : 'spot_light_info',
         'code'          : 0x00000462,
-        'unimplemented' : True,
+        'attrib'        : [
+            ['SpotAngle', 'float32'],
+            ['SpotExponent', 'float32']
+        ]
     },
     {
         'name'          : 'near_attenuation',
         'code'          : 0x00000463,
-        'unimplemented' : True,
+        'attrib'        : [
+            ['Start', 'float32'],
+            ['End', 'float32']
+        ]
     },
     {
         'name'          : 'far_attenuation',
         'code'          : 0x00000464,
-        'unimplemented' : True,
+        'attrib'        : [
+            ['Start', 'float32'],
+            ['End', 'float32']
+        ]
     },
     {
         'name'          : 'emitter',
         'code'          : 0x00000500,
-        'unimplemented' : True,
+        'container'     : True,
     },
     {
         'name'          : 'emitter_header',
         'code'          : 0x00000501,
-        'unimplemented' : True,
+        'attrib'        : [
+            ['Version', 'version'],
+            ['Name', 'name']
+        ]
     },
     {
         'name'          : 'emitter_user_data',
         'code'          : 0x00000502,
-        'unimplemented' : True,
+        'attrib'        : [
+            ['Type', 'uint32'],
+            ['SizeofStringParam', 'uint32'],
+            ['StringParam', 'string']
+        ]
     },
     {
         'name'          : 'emitter_info',
         'code'          : 0x00000503,
-        'unimplemented' : True,
+        'attrib'        : [
+            ['TextureFilename', 'char', 260],
+            ['StartSize', 'float32'],
+            ['EndSize', 'float32'],
+            ['Lifetime', 'float32'],
+            ['EmissionRate', 'float32'],
+            ['MaxEmissions', 'float32'],
+            ['VelocityRandom', 'float32'],
+            ['PositionRandom', 'float32'],
+            ['FadeTime', 'float32'],
+            ['Gravity', 'float32'],
+            ['Elasticity', 'float32'],
+            ['Velocity', 'vector3'],
+            ['Acceleration', 'vector3'],
+            ['StartColor', 'rgba'],
+            ['EndColor', 'rgba']
+        ]
     },
     {
         'name'          : 'emitter_infov2',
         'code'          : 0x00000504,
-        'unimplemented' : True,
+        'attrib'        : [
+            ['BurstSize', 'uint32'],
+            ['CreationVolume', '???'],
+            ['VelRandom', '???'],
+            ['OutwardVel', 'float32'],
+            ['VelInherit', 'float32'],
+            ['Shader', '???'],
+            ['RenderMode', 'uint32'],
+            ['FrameMode', 'uint32'],
+            ['_reserved', 'uint32', 6],
+        ]
     },
     {
         'name'          : 'emitter_props',
         'code'          : 0x00000505,
-        'unimplemented' : True,
+        'attrib'        : [
+            ['ColorKeyframes', 'uint32'],
+            ['OpacityKeyframes', 'uint32'],
+            ['SizeKeyframes', 'uint32'],
+            ['ColorRandom', 'rgba'],
+            ['OpacityRandom', 'float32'],
+            ['SizeRandom', 'float32'],
+            ['_reserved', 'uint32', 4]
+        ]
     },
     {
         'name'          : 'obsolete_w3d_chunk_emitter_color_keyframe',
         'code'          : 0x00000506,
-        'unimplemented' : True,
+        'attrib'        : [
+            ['Time', 'float32'],
+            ['Color', 'rgba']
+        ]
     },
     {
         'name'          : 'obsolete_w3d_chunk_emitter_opacity_keyframe',
         'code'          : 0x00000507,
-        'unimplemented' : True,
+        'attrib'        : [
+            ['Time', 'float32'],
+            ['Opacity', 'float32']
+        ]
     },
     {
         'name'          : 'obsolete_w3d_chunk_emitter_size_keyframe',
         'code'          : 0x00000508,
-        'unimplemented' : True,
+        'attrib'        : [
+            ['Time', 'float32'],
+            ['Size', 'float32']
+        ]
     },
     {
         'name'          : 'emitter_line_properties',
         'code'          : 0x00000509,
-        'unimplemented' : True,
+        'attrib'        : [
+            ['Flags', 'uint32'],
+            ['SubdivisionLevel', 'uint32'],
+            ['NoiseAmplitude', 'float32'],
+            ['MergeAbortFactor', 'float32'],
+            ['TextureTileFactor', 'float32'],
+            ['UPerSec', 'float32'],
+            ['VPerSec', 'float32'],
+            ['_reserved', 'uint32', 9]
+        ]
     },
     {
         'name'          : 'emitter_rotation_keyframes',
         'code'          : 0x0000050A,
-        'unimplemented' : True,
+        'attrib'        : [
+            ['KeyframeCount', 'uint32'],
+            ['Random', 'float32'],
+            ['OrientationRandom', 'float32'],
+            ['_reserved', 'uint32'],
+        ],
+        'subname'       : 'keyframe',
+        'subattrib'     : [
+            ['Time', 'float32'],
+            ['Rotation', 'float32']
+        ]
     },
     {
         'name'          : 'emitter_frame_keyframes',
         'code'          : 0x0000050B,
-        'unimplemented' : True,
+        'attrib'        : [
+            ['KeyframeCount', 'uint32'],
+            ['Random', 'float32'],
+            ['_reserved', 'uint32', 2],
+        ],
+        'subname'       : 'keyframe',
+        'subattrib'     : [
+            ['Time', 'float32'],
+            ['Frame', 'float32']
+        ]
     },
     {
         'name'          : 'emitter_blur_time_keyframes',
         'code'          : 0x0000050C,
-        'unimplemented' : True,
+        'attrib'        : [
+            ['KeyframeCount', 'uint32'],
+            ['Random', 'float32'],
+            ['_reserved', 'uint32'],
+        ],
+        'subname'       : 'keyframe',
+        'subattrib'     : [
+            ['Time', 'float32'],
+            ['BlurTime', 'float32']
+        ]
     },
     {
         'name'          : 'aggregate',
@@ -624,12 +769,25 @@ descriptor = [
     {
         'name'          : 'aggregate_header',
         'code'          : 0x00000601,
-        'unimplemented' : True,
+        'attrib'        : [
+            ['Version', 'version'],
+            ['Name', 'name']
+        ],
+        'container'     : True
     },
     {
         'name'          : 'aggregate_info',
         'code'          : 0x00000602,
-        'unimplemented' : True,
+        'attrib'        : [
+            ['BaseModelName', 'name', 2],
+            ['SubobjectCount', 'uint32']
+        ],
+        'subname'       : 'subobject',
+        'subattrib'     : [
+            ['SubobjectName', 'name', 2],
+            ['BoneName', 'name', 2]
+        ],
+        
     },
     {
         'name'          : 'texture_replacer_info',
@@ -639,7 +797,11 @@ descriptor = [
     {
         'name'          : 'aggregate_class_info',
         'code'          : 0x00000604,
-        'unimplemented' : True,
+        'attrib'        : [
+            ['OriginalClassID', 'uint32'],
+            ['Flags', 'uint32'],
+            ['_reserved', 'uint32', 3],
+        ]
     },
     {
         'name'          : 'hlod',
@@ -741,7 +903,7 @@ descriptor = [
     {
         'name'          : 'lightscape_light',
         'code'          : 0x00000801,
-        'unimplemented' : True,
+        'container'     : True,
     },
     {
         'name'          : 'light_transform',
@@ -799,8 +961,8 @@ struct_types = {
     'vector3': '3f',
     'quaternion': '4f',
     
-    'name': '16s',
-    # 'string' is a special case
+    'char': 'B',
+    # 'name' and 'string' are special cases
 }
 
 dint = {}
@@ -816,9 +978,12 @@ def elem_init(desc):
     return e
 
 def elem_parse_type(file, type, count=1):
-    fmt = struct_types[type]
-    if count > 1:
-        fmt *= count
+    if type == 'name':
+        fmt = str(count * 16) + 's'
+    else:
+        fmt = struct_types[type]
+        if count > 1:
+            fmt *= count
     
     binary = file.read(struct.calcsize(fmt))
     if binary == b'':
@@ -837,7 +1002,7 @@ def elem_parse_type(file, type, count=1):
 def elem_attr_size(attrdesc):
     size = 0
     for i in attrdesc:
-        if i[1] == 'string':
+        if i[1] not in struct_types:
             continue
         
         fmt = struct_types[i[1]]
@@ -862,7 +1027,7 @@ def elem_parse_nodes(parent, file, size=0x7FFFFFFF):
         
         # check header exists
         if hdesc not in dint:
-            print('MISSINGNO : ' + "0x%0.8X" % hdesc)
+            print("MISSINGNO : 0x%0.8X in" % hdesc, parent.tag)
             file.read(hsize)
             continue
         
@@ -880,38 +1045,38 @@ def elem_parse_nodes(parent, file, size=0x7FFFFFFF):
         if ('attrib' in e.desc and e.desc['attrib'] is not None):
             attribsize = elem_attr_size(e.desc['attrib'])
             for i in e.desc['attrib']:
-                if i[1] == 'string':
-                    val = b2s(file.read(hsize))
+                if i[1] == 'string': #TODO special string cases in emitter structs
+                    val = b2s(file.read(hsize - attribsize))
                 else:
                     if len(i) > 2:
                         val = str(elem_parse_type(file, i[1], i[2]))
                     else:
                         val = str(elem_parse_type(file, i[1]))
                 if (i[0] != ''):
-                    if (i[0][1] != '_'):
+                    if (i[0][0] != '_'):
                         e.attrib[i[0]] = val
-                    else:
-                        e.text = val
+                else:
+                    e.text = val
         
         if ('subattrib' in e.desc and e.desc['subattrib'] is not None):
             stepsize = elem_attr_size(e.desc['subattrib'])
             step = 0
-            while step < hsize:
+            while step < hsize - attribsize:
                 sub = et.Element(e.desc['subname'])
                 e.append(sub)
                 for i in e.desc['subattrib']:
                     if i[1] == 'string':
-                        val = b2s(file.read(hsize))
+                        val = b2s(file.read(hsize - attribsize))
                     else:
                         if len(i) > 2:
                             val = str(elem_parse_type(file, i[1], i[2]))
                         else:
                             val = str(elem_parse_type(file, i[1]))
                     if (i[0] != ''):
-                        if (i[0][1] != '_'):
+                        if (i[0][0] != '_'):
                             sub.attrib[i[0]] = val
-                        else:
-                            sub.text = val
+                    else:
+                        sub.text = val
                 step += stepsize
         
         # containers, recursive reading
