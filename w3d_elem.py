@@ -32,7 +32,12 @@ descriptor = [
         'name'          : 'vertex_influences',
         'code'          : 0x0000000E,
         'subname'       : 'id',
-        'subattrib'     : [['', 'uint16'], ['_padding', 'uint8', 6]]
+        'subattrib'     : [
+            ['Bone0Index', 'uint16'],
+            ['Bone1Index', 'uint16'],
+            ['Bone0Weight', 'uint16'],
+            ['Bone1Weight', 'uint16']
+        ]
     },
     {
         'name'          : 'mesh_header3',
@@ -288,6 +293,18 @@ descriptor = [
             ['Color', 'rgba'],
             ['_reserved', 'uint32', 2]
         ]
+    },
+    {
+        'name'          : 'tangents',
+        'code'          : 0x00000060,
+        'subname'       : 'tangent',
+        'subattrib'     : [['', 'vector3']]
+    },
+    {
+        'name'          : 'binormals',
+        'code'          : 0x00000061,
+        'subname'       : 'binormal',
+        'subattrib'     : [['', 'vector3']]
     },
     {
         'name'          : 'ps2_shaders',
@@ -946,6 +963,18 @@ descriptor = [
         'name'          : 'soundrobj_definition',
         'code'          : 0x00000A02,
         'unimplemented' : True,
+    },
+    {
+        'name'          : 'secondary_vertices',
+        'code'          : 0x00000C00,
+        'subname'       : 'vertex',
+        'subattrib'     : [['', 'vector3']]
+    },
+    {
+        'name'          : 'secondary_normals',
+        'code'          : 0x00000C01,
+        'subname'       : 'normal',
+        'subattrib'     : [['', 'vector3']]
     },
 ]
 
