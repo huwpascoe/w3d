@@ -2,6 +2,8 @@ from xml.dom import minidom
 import xml.etree.ElementTree as et
 import struct
 import argparse
+import os
+import ast
 
 descriptor = [
     {
@@ -952,7 +954,6 @@ struct_types = {
     'uint16': 'H',
     'uint32': 'L',
     'sint32': 'l',
-    'version': '2H',
     'rgb': '4B',
     'rgba': '4B',
     
@@ -962,6 +963,7 @@ struct_types = {
     'quaternion': '4f',
     
     'char': 'B',
+    'version': '2H',
     # 'name' and 'string' are special cases
 }
 
@@ -971,11 +973,6 @@ for d in descriptor:
 dstr = {}
 for d in descriptor:
     dstr[d['name']] = d
-
-def elem_init(desc):
-    e = et.Element(desc['name'])
-    e.desc = desc
-    return e
 
 def elem_parse_type(file, type, count=1):
     if type == 'name':
@@ -989,19 +986,61 @@ def elem_parse_type(file, type, count=1):
     if binary == b'':
         return None
     data = struct.unpack(fmt, binary)
-    
-    if type == 'name':
-        return b2s(data[0])
+
+    if type == 'rgb':
+        return (data[0], data[1], data[2])
     if type == 'version':
         return str(data[1]) + '.' + str(data[0])
+    if type == 'name':
+        return b2s(data[0])
     
     if len(data) == 1:
         return data[0]
     
     return data
+def elem_write_type(file, val, type, count=1):
+    if type == 'name':
+        fmt = str(count * 16) + 's'
+    else:
+        fmt = struct_types[type]
+        if count > 1:
+            fmt *= count
+    
+    # null values
+    if val is None:
+        size = struct.calcsize(fmt)
+        file.write(b'\x00' * size)
+        return
+    
+    # parse strings to types
+    data = None
+    if type == 'rgb':
+        val = ast.literal_eval(val)
+        data = struct.pack(fmt, val[0], val[1], val[2], 0)
+    elif type == 'version':
+        val = val.split('.')
+        data = struct.pack(fmt, int(val[1]), int(val[0]))
+    elif type == 'name':
+        data = struct.pack(fmt, s2b(val))
+    else:
+        val = ast.literal_eval(val)
+        if isinstance(val, tuple):
+            data = struct.pack(fmt, *val)
+        else:
+            data = struct.pack(fmt, val)
+    
+    if data is not None:
+        file.write(data)
+    
 def elem_attr_size(attrdesc):
     size = 0
     for i in attrdesc:
+        if i[1] == 'name':
+            if len(i) > 2:
+                size += 16 * i[2]
+            else:
+                size += 16
+            continue
         if i[1] not in struct_types:
             continue
         
@@ -1015,36 +1054,40 @@ def elem_parse_nodes(parent, file, size=0x7FFFFFFF):
     while size > 0:
         
         # read data in correctly
-        data = read_struct(file, 'LL')
-        if data == None:
+        binary = file.read(8)
+        if binary == b'':
             return
+        data = struct.unpack('LL', binary)
         
+        # chunk type, chunk size (not including header)
         hdesc = data[0]
         hsize = data[1] & 0x7FFFFFFF
         
-        # header size + chunk size
+        # subtract header + chunk size
         size -= 8 + hsize
         
-        # check header exists
+        # skip if invalid
         if hdesc not in dint:
             print("MISSINGNO : 0x%0.8X in" % hdesc, parent.tag)
             file.read(hsize)
             continue
         
-        # create the element
-        e = elem_init(dint[hdesc])
-        parent.append(e)
-        
-        if ('unimplemented' in e.desc and e.desc['unimplemented'] == True):
-            print('unimplemented : ' + e.desc['name'])
+        # get descriptor, but skip if unimplemented
+        desc = dint[hdesc]
+        if ('unimplemented' in desc and desc['unimplemented'] == True):
+            print('unimplemented : ' + desc['name'])
             file.read(hsize)
             continue
         
+        # create the element
+        e = et.Element(desc['name'])
+        parent.append(e)
+        
         # attributes
         attribsize = 0
-        if ('attrib' in e.desc and e.desc['attrib'] is not None):
-            attribsize = elem_attr_size(e.desc['attrib'])
-            for i in e.desc['attrib']:
+        if ('attrib' in desc and desc['attrib'] is not None):
+            attribsize = elem_attr_size(desc['attrib'])
+            for i in desc['attrib']:
                 if i[1] == 'string': #TODO special string cases in emitter structs
                     val = b2s(file.read(hsize - attribsize))
                 else:
@@ -1058,20 +1101,18 @@ def elem_parse_nodes(parent, file, size=0x7FFFFFFF):
                 else:
                     e.text = val
         
-        if ('subattrib' in e.desc and e.desc['subattrib'] is not None):
-            stepsize = elem_attr_size(e.desc['subattrib'])
+        if ('subattrib' in desc and desc['subattrib'] is not None):
+            stepsize = elem_attr_size(desc['subattrib'])
             step = 0
             while step < hsize - attribsize:
-                sub = et.Element(e.desc['subname'])
+                sub = et.Element(desc['subname'])
                 e.append(sub)
-                for i in e.desc['subattrib']:
-                    if i[1] == 'string':
-                        val = b2s(file.read(hsize - attribsize))
+                for i in desc['subattrib']:
+                    if len(i) > 2:
+                        val = str(elem_parse_type(file, i[1], i[2]))
                     else:
-                        if len(i) > 2:
-                            val = str(elem_parse_type(file, i[1], i[2]))
-                        else:
-                            val = str(elem_parse_type(file, i[1]))
+                        val = str(elem_parse_type(file, i[1]))
+                    
                     if (i[0] != ''):
                         if (i[0][0] != '_'):
                             sub.attrib[i[0]] = val
@@ -1080,9 +1121,98 @@ def elem_parse_nodes(parent, file, size=0x7FFFFFFF):
                 step += stepsize
         
         # containers, recursive reading
-        if ('container' in e.desc and e.desc['container'] == True):
+        if ('container' in desc and desc['container'] == True):
             elem_parse_nodes(e, file, hsize + attribsize)
 
+def elem_calc_size(parent):
+    
+    parent.size = 0
+    
+    # check tag exists
+    if parent.tag not in dstr:
+        print("MISSINGTAG :", parent.tag)
+        return 0
+    
+    desc = dstr[parent.tag]
+    
+    # attributes
+    if ('attrib' in desc and desc['attrib'] is not None):
+        parent.size += elem_attr_size(desc['attrib'])
+        for i in desc['attrib']:
+            if i[1] == 'string':
+                if i[0] == '':
+                    parent.size += s2bsize(parent.text)
+                else:
+                    parent.size += s2bsize(parent.attrib[i[0]])
+    
+    if ('subattrib' in desc and desc['subattrib'] is not None):
+        subsize = elem_attr_size(desc['subattrib'])
+        for child in parent:
+            parent.size += subsize
+    
+    # containers, recursive
+    if ('container' in desc and desc['container'] == True):
+        for child in parent:
+            parent.size += elem_calc_size(child)
+    
+    # return the size + header size
+    return parent.size + 8
+
+def elem_write_nodes(file, parent):
+    
+    # check tag exists
+    if parent.tag not in dstr:
+        print("MISSINGTAG :", parent.tag)
+        return 0
+    
+    desc = dstr[parent.tag]
+    
+    # header
+    data = struct.pack('LL', desc['code'], parent.size)
+    file.write(data)
+    
+    # attributes
+    if ('attrib' in desc and desc['attrib'] is not None):
+        for i in desc['attrib']:
+            if i[1] == 'string':
+                if i[0] == '':
+                    file.write(s2b(parent.text))
+                else:
+                    file.write(s2b(parent.attrib[i[0]]))
+            else:
+                if (i[0] != ''):
+                    if (i[0][0] != '_'):
+                        val = parent.attrib[i[0]]
+                    else:
+                        val = None
+                else:
+                    val = parent.text
+                if len(i) > 2:
+                    elem_write_type(file, val, i[1], i[2])
+                else:
+                    elem_write_type(file, val, i[1])
+
+    
+    if ('subattrib' in desc and desc['subattrib'] is not None):
+        for child in parent:
+            for i in desc['subattrib']:
+                if (i[0] != ''):
+                    if (i[0][0] != '_'):
+                        val = child.attrib[i[0]]
+                    else:
+                        val = None
+                else:
+                    val = child.text
+                if len(i) > 2:
+                    elem_write_type(file, val, i[1], i[2])
+                else:
+                    elem_write_type(file, val, i[1])
+    
+    # containers, recursive
+    if ('container' in desc and desc['container'] == True):
+        for child in parent:
+            elem_write_nodes(file, child)
+    
 def b2s(str):
     return str.split(b'\0')[0].decode('utf-8')
 def s2b(str, s=None):
@@ -1090,50 +1220,14 @@ def s2b(str, s=None):
     if s is not None and len(str) >= s:
         str = str[:s - 1]
     return str + b'\0'
+def s2bsize(str, s=None):
+    str = str.encode('utf-8')
+    if s is not None and len(str) >= s:
+        str = str[:s - 1]
+    return len(str + b'\0')
         
 # loading algorithm
 
-def read_struct(file, fmt):
-    binary = file.read(struct.calcsize(fmt))
-    
-    if binary == b'':
-        return None
-    
-    data = struct.unpack(fmt, binary)
-    return data
-
-def read_header(file):
-    data = read_struct(file, 'LL')
-    
-    if data == None:
-        return None
-    
-    try:
-        type = w3d_def_load[data[0]]
-    except KeyError:
-        type = 'error'
-    
-    size = data[1] & 0x7FFFFFFF
-    
-    return (type, size)
-
-def parse_nodes(parent, file, size=0x7FFFFFFF):
-    while size > 0:
-        ci = read_header(file)
-        if ci == None:
-            break
-        
-        try:
-            child = globals()['node_' + ci[0]]()
-            child.read(file, ci[1])
-            parent.append(child)
-        except KeyError:
-            file.read(ci[1])
-            print('Error! Not implemented: ' + ci[0])
-        
-        # limit size for nested chunks
-        size -= 8 + ci[1] # header size + chunk size
-    
 def w3d_to_elem(filepath):
     file = open(filepath, 'rb')
     print('load: ' + filepath)
@@ -1145,27 +1239,42 @@ def w3d_to_elem(filepath):
     return root
     
 def elem_to_w3d(root, filepath):
-    file = open(filepath, 'wb')
     print('save: ' + filepath)
+    
+    #calculate chunk sizes
+    filesize = 0
     for child in root:
-        child.pack()
-        child.write(file)
+        filesize += elem_calc_size(child)
+    
+    # write the chunks
+    file = open(filepath, 'wb')
+    for child in root:
+        elem_write_nodes(file, child)
     file.close()
+    
+    print (filesize, 'bytes')
 
-parser = argparse.ArgumentParser(description='Westwood3D to XML')
-parser.add_argument('-s', help='Source file path e.g. kane.w3d')
-parser.add_argument('-o', help='Output file path e.g. kane.xml')
+parser = argparse.ArgumentParser(description='W3D-XML')
+parser.add_argument('-s', help='Source file path')
+parser.add_argument('-o', help='Output file path')
 args = parser.parse_args()
 
 if args.s is not None and args.o is not None:
-
-    #tree = et.parse('test.xml')
-    #root = tree.getroot()
-    #elem_to_w3d('myfile.w3d')
-
-    root = w3d_to_elem(args.s)
-    file = open(args.o, 'w')
-    file.write(minidom.parseString(et.tostring(root)).toprettyxml())
-    file.close()
+    srcname, srcext = os.path.splitext(args.s)
+    dstname, dstext = os.path.splitext(args.o)
+    
+    if srcext == '.w3d' and dstext == '.xml':
+        root = w3d_to_elem(args.s)
+        file = open(args.o, 'w')
+        file.write(minidom.parseString(et.tostring(root)).toprettyxml())
+        file.close()
+    
+    elif srcext == '.xml' and dstext == '.w3d':
+        tree = et.parse(args.s)
+        root = tree.getroot()
+        elem_to_w3d(root, args.o)
+        
+    else:
+        print('NOPE. Must be either: "-s src.w3d -o dest.xml" or "-s src.xml -o dest.w3d"')
 else:
     parser.print_help()
