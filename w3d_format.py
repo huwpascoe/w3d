@@ -407,12 +407,33 @@ format = [
     {
         'tag'           : 'animation_channel',
         'id'            : 0x00000202,
-        'unimplemented' : True,
+        'attr'          : [
+            ['FirstFrame', 'uint16'],
+            ['LastFrame', 'uint16'],
+            ['VectorLen', 'uint16'],
+            ['Flags', 'uint16'],
+            ['Pivot', 'uint16'],
+            ['_padding', 'uint16']
+        ],
+        'subtag'        : 'data',
+        'subattr'       : [
+            ['', 'float32'],
+        ]
     },
     {
         'tag'           : 'bit_channel',
         'id'            : 0x00000203,
-        'unimplemented' : True,
+        'attr'          : [
+            ['FirstFrame', 'uint16'],
+            ['LastFrame', 'uint16'],
+            ['Flags', 'uint16'],
+            ['Pivot', 'uint16'],
+            ['DefaultVal', 'uint8']
+        ],
+        'subtag'        : 'data',
+        'subattr'       : [
+            ['', 'uint8'],
+        ]
     },
     {
         'tag'           : 'compressed_animation',

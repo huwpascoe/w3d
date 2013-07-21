@@ -3,6 +3,13 @@ import xml.etree.ElementTree as et
 import os, argparse, ast
 import w3d_chunk, w3d_format
 
+def str2val(str):
+    if str == 'nan':
+        return float('nan')
+    if str == 'inf':
+        return float('inf')
+    return ast.literal_eval(str)
+    
 dstr = {}
 for d in w3d_format.format:
     dstr[d['tag']] = d
@@ -47,7 +54,7 @@ def xml_to_chunk(e):
             if i[1] == 'string' or i[1] == 'name' or i[1] == 'version':
                 chunk.attr[i[0]] = val
             else:
-                chunk.attr[i[0]] = ast.literal_eval(val)
+                chunk.attr[i[0]] = str2val(val)
     
     if ('subattr' in chunk.format and chunk.format['subattr'] is not None):
         for se in e:
@@ -66,7 +73,7 @@ def xml_to_chunk(e):
                 if i[1] == 'string' or i[1] == 'name' or i[1] == 'version':
                     sub[i[0]] = val
                 else:
-                    sub[i[0]] = ast.literal_eval(val)
+                    sub[i[0]] = str2val(val)
     
     if ('container' in chunk.format and chunk.format['container'] == True):
         for child in e:
