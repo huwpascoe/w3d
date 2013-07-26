@@ -177,9 +177,9 @@ def chunk_read(parent, file, size=0x7FFFFFFF):
                     val = b2s(file.read(hsize - attrsize))
                 else:
                     if len(i) > 2:
-                        val = str(attr_read(file, i[1], i[2]))
+                        val = attr_read(file, i[1], i[2])
                     else:
-                        val = str(attr_read(file, i[1]))
+                        val = attr_read(file, i[1])
                 if (i[0] != ''):
                     if (i[0][0] != '_'):
                         chunk.attr[i[0]] = val
@@ -195,9 +195,9 @@ def chunk_read(parent, file, size=0x7FFFFFFF):
                 
                 for i in chunk.format['subattr']:
                     if len(i) > 2:
-                        val = str(attr_read(file, i[1], i[2]))
+                        val = attr_read(file, i[1], i[2])
                     else:
-                        val = str(attr_read(file, i[1]))
+                        val = attr_read(file, i[1])
                     
                     if (i[0] != ''):
                         if (i[0][0] != '_'):
